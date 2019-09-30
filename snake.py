@@ -38,6 +38,17 @@ def check_events():
                     snake.direction = "up"
                     break
 
+def slow_time(snake_head, direction):
+    if snake_head[0] == 0 and direction == "left":
+        time.sleep(0.2)
+    elif snake_head[1] == 0 and direction == "up":
+        time.sleep(0.2)
+    elif snake_head[0] == squares - 1 and direction == "right":
+        time.sleep(0.2)
+    elif snake_head[1] == squares - 1 and direction == "down":
+        time.sleep(0.2)
+    else:
+        time.sleep(0.15)
 
 class Snake:
     def __init__(self, segments, direction):
@@ -111,7 +122,8 @@ apple = Apple(apple_start)
 
 
 while True:
-    time.sleep(0.15)
+    
+    slow_time(snake.segments[0], snake.direction)
     check_events()
     snake.move_snake(apple.pos)
     score = apple.check_if_eaten(snake.segments[0], score, snake.segments)
