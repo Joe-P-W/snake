@@ -1,7 +1,6 @@
 import os
 import shutil
 
-os.system("python -m pip install --upgrade pip")
 os.system("python -m pip install pygame")
 path = os.getcwd()
 print(path)
