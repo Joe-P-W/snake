@@ -2,24 +2,17 @@ import pygame
 import sys
 import time
 import random
+import json
 
-pygame.init()
+from GameEntities import Snake, Apple
 
-resolution = (600, 600)
-squares = 20
-green = (0, 255, 0) 
-blue = (0, 0, 128) 
-score = 0
 
-screen = pygame.display.set_mode(resolution)
-font = pygame.font.SysFont('Arial', 30)
-
-def check_events():
+def check_events(snake):
     for event in pygame.event.get():
 
         if event.type == pygame.QUIT:
             sys.exit()
-        
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 if snake.direction != "right":
@@ -38,7 +31,8 @@ def check_events():
                     snake.direction = "up"
                     break
 
-def slow_time(snake_head, direction):
+
+def slow_time(snake_head, direction, squares):
     if snake_head[0] == 0 and direction == "left":
         time.sleep(0.2)
     elif snake_head[1] == 0 and direction == "up":
@@ -50,115 +44,113 @@ def slow_time(snake_head, direction):
     else:
         time.sleep(0.15)
 
-class Snake:
-    def __init__(self, segments, direction):
-        self.segments = segments
-        self.direction = direction
 
-    def move_snake(self, apple_pos):
+def main_loop(screen, resolution, squares, font):
 
-        if self.direction == "up":
-            new_head = (self.segments[0][0], self.segments[0][1]-1)
-            self.segments.insert(0, new_head)
-            if apple_pos != self.segments[0]:
-                self.segments.pop()
+    start_pos = [(squares/2, squares/2), (squares/2, (squares/2)+1), (squares/2, (squares/2)+2)]
+    snake = Snake(start_pos, "up")
+    score = 0
 
-        elif self.direction == "down":
-            new_head = (self.segments[0][0], self.segments[0][1]+1)
-            self.segments.insert(0, new_head)
-            if apple_pos != self.segments[0]:
-                self.segments.pop()
+    apple_start = (random.randint(0, squares-1), random.randint(0, squares-1))
+    while apple_start in start_pos:
+        apple_start = (random.randint(0, squares-1), random.randint(0, squares-1))
 
-        elif self.direction == "left":
-            new_head = (self.segments[0][0]-1, self.segments[0][1])
-            self.segments.insert(0, new_head)
-            if apple_pos != self.segments[0]:
-                self.segments.pop()
+    apple = Apple(apple_start)
 
-        elif self.direction == "right":
-            new_head = (self.segments[0][0]+1, self.segments[0][1])
-            self.segments.insert(0, new_head)
-            if apple_pos != self.segments[0]:
-                self.segments.pop()
-    
-    def check_out_of_bounds(self):
-        
-        for segment in self.segments:
-            if segment[0] < 0 or segment[0] > squares-1 or segment[1] < 0 or segment[1] > squares-1:
-                return True
-        for i in range(len(self.segments)):
-            if self.segments[i] in self.segments[:i]:
-                return True
-            if self.segments[i] in self.segments[:i]:
-                return True
-        
-        return False
-        
+    while True:
 
-class Apple:
-    def __init__(self, pos):
-        self.pos = pos
-    
-    def check_if_eaten(self, snake_pos, score, snake_segments):
-        if snake_pos == self.pos:
+        slow_time(snake.segments[0], snake.direction, squares)
+        check_events(snake)
+        snake.move_snake(apple.pos)
+        score = apple.check_if_eaten(snake.segments[0], score, snake.segments, squares)
+        out_of_bounds = snake.check_out_of_bounds(squares)
 
-            while self.pos in snake_segments:
-                self.pos = (random.randint(0,squares - 1),random.randint(0,squares - 1))
+        screen.fill((0, 0, 0))
 
-            score += 1
-            return score
+        if not out_of_bounds:
+
+            apple_pos = ((apple.pos[0]/squares)*resolution[0], (apple.pos[1]/squares)*resolution[0],
+                         resolution[0]/squares, resolution[1]/squares)
+
+            pygame.draw.rect(screen, (255, 0, 0), apple_pos)
+
+            for segment in snake.segments:
+
+                pos = ((segment[0]/squares)*resolution[0], (segment[1]/squares)*resolution[0],
+                       resolution[0]/squares, resolution[1]/squares)
+
+                pygame.draw.rect(screen, (255, 255, 255), pos)
+
+            text = font.render(f'Score: {score}', False, (255, 0, 255))
+            screen.blit(text, (resolution[0]-150, 10))
+
         else:
-            return score
-            
+            game_over(screen, squares, resolution, font, score)
 
-start_pos = [(squares/2, squares/2), (squares/2, (squares/2)+1), (squares/2, (squares/2)+2)]
-snake = Snake(start_pos, "up")
-
-apple_start = (random.randint(0,squares-1),random.randint(0,squares-1))
-while apple_start in start_pos:
-    apple_start = (random.randint(0,squares-1),random.randint(0,squares-1))
-    
-apple = Apple(apple_start)
-
-
-while True:
-    
-    slow_time(snake.segments[0], snake.direction)
-    check_events()
-    snake.move_snake(apple.pos)
-    score = apple.check_if_eaten(snake.segments[0], score, snake.segments)
-    out_of_bounds = snake.check_out_of_bounds()
-    
-    screen.fill((0, 0, 0))
-
-
-    if not out_of_bounds:
+        pygame.display.flip()
         
-        apple_pos = ((apple.pos[0]/squares)*resolution[0], (apple.pos[1]/squares)*resolution[0],
-                resolution[0]/squares, resolution[1]/squares)
-                
-        pygame.draw.rect(screen, (255, 0, 0), apple_pos)
+def game_over(screen, squares, resolution, font, score):
+    with open("high_scores.json", "r") as in_file:
+        high_scores = json.load(in_file)
+    
+    high_scores.sort(reverse=True)
+    if score > high_scores[-1]:
+        high_scores.append(score)
+        high_scores.sort(reverse=True)
+        if len(high_scores) > 5:
+            high_scores.pop()
+
+        with open("high_scores.json", "w") as out_file:
+            json.dump(high_scores, out_file)
+
+    for i in range(500):
+        text = font.render("Game Over", False, (0, 255, 0))
+        score_text = font.render(f"Your score: {score}", False, (0, 255, 0))
+        high_score = font.render(f"High score: {high_scores[0]}", False, (0, 255, 0))
+        textRect = text.get_rect()
+        scoreRect = score_text.get_rect()
+        highRect = score_text.get_rect()
+        textRect.center = (resolution[0] // 2, resolution[1] // 2)
+        scoreRect.center = (resolution[0] // 2, (resolution[1] // 2) + 50)
+        highRect.center = (resolution[0] // 2, (resolution[1] // 2) + 100)
+        screen.blit(text, textRect)
+        screen.blit(score_text, scoreRect)
+        screen.blit(high_score, highRect)
+        pygame.display.flip()
+        time.sleep(0.01)
         
-        for segment in snake.segments:
+        for event in pygame.event.get():
 
-            pos = ((segment[0]/squares)*resolution[0], (segment[1]/squares)*resolution[0],
-                   resolution[0]/squares, resolution[1]/squares)
-
-            pygame.draw.rect(screen, (255, 255, 255), pos)
-            
-        text = font.render(f'Score: {score}', False, (255, 0, 255))
-        screen.blit(text, (resolution[0]-150, 10))
+            if event.type == pygame.QUIT:
+                sys.exit()
         
-    else:
-        break
+        if i == 499:
+            main_menu(screen, squares, resolution, font)
 
-    pygame.display.flip()
 
-while True:
-    text = font.render('Game Over', True, green, blue)
-    textRect = text.get_rect()
-    textRect.center = (resolution[0] // 2, resolution[1] // 2)
-    screen.blit(text, textRect)
-    check_events()
-    pygame.display.flip()
+def main_menu(screen, squares, resolution, font):
 
+    play_button = (resolution[0]/2 - 50, resolution[1] - 500, 100, 50)
+    play_button_rect = pygame.Rect(play_button)
+    high_scores = (resolution[0]/2 - 50, resolution[1] - 350, 100, 50)
+    high_scores__button_rect = pygame.Rect(high_scores)
+    quit_button = (resolution[0]/2 - 50, resolution[1] - 200, 100, 50)
+    quit_button_button_rect = pygame.Rect(quit_button)
+    while True:
+        time.sleep(0.1)
+        screen.fill((0, 0, 0))
+        pygame.draw.rect(screen, (255, 100, 0), play_button)
+        pygame.draw.rect(screen, (255, 100, 0), high_scores)
+        pygame.draw.rect(screen, (255, 100, 0), quit_button)
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if play_button_rect.collidepoint(event.pos):
+                        main_loop(screen, resolution, squares, font)
+
+        pygame.display.flip()

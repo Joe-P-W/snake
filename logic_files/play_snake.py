@@ -1,3 +1,3 @@
 import os
 
-os.system("python logic_files/snake_game_logic.py")
+os.system("python logic_files/game.py")
