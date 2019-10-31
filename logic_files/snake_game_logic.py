@@ -130,11 +130,11 @@ def game_over(screen, squares, resolution, font, score):
 
 def main_menu(screen, squares, resolution, font):
 
-    play_button = (resolution[0]/2 - 50, resolution[1] - 500, 100, 50)
+    play_button = (resolution[0]/2 - 75, resolution[1] - 500, 150, 50)
     play_button_rect = pygame.Rect(play_button)
-    high_scores = (resolution[0]/2 - 50, resolution[1] - 350, 100, 50)
-    high_scores__button_rect = pygame.Rect(high_scores)
-    quit_button = (resolution[0]/2 - 50, resolution[1] - 200, 100, 50)
+    high_scores = (resolution[0]/2 - 75, resolution[1] - 350, 150, 50)
+    high_scores_button_rect = pygame.Rect(high_scores)
+    quit_button = (resolution[0]/2 - 75, resolution[1] - 200, 150, 50)
     quit_button_button_rect = pygame.Rect(quit_button)
     while True:
         time.sleep(0.1)
@@ -142,7 +142,18 @@ def main_menu(screen, squares, resolution, font):
         pygame.draw.rect(screen, (255, 100, 0), play_button)
         pygame.draw.rect(screen, (255, 100, 0), high_scores)
         pygame.draw.rect(screen, (255, 100, 0), quit_button)
-
+        play_text = font.render("Play", False, (0, 255, 0))
+        score_text = font.render("High Scores", False, (0, 255, 0))
+        quit_text = font.render("Quit", False, (0, 255, 0))
+        playRect = play_text.get_rect()
+        scoreRect = score_text.get_rect()
+        quitRect = quit_text.get_rect()
+        playRect.center = (resolution[0]/2, resolution[1] - 475)
+        scoreRect.center = (resolution[0]/2, resolution[1] - 325)
+        quitRect.center = (resolution[0]/2, resolution[1] - 175)
+        screen.blit(play_text, playRect)
+        screen.blit(score_text, scoreRect)
+        screen.blit(quit_text, quitRect)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -150,7 +161,44 @@ def main_menu(screen, squares, resolution, font):
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    if play_button_rect.collidepoint(event.pos):
+
+                    if quit_button_button_rect.collidepoint(event.pos):
+                        sys.exit()
+                    elif play_button_rect.collidepoint(event.pos):
                         main_loop(screen, resolution, squares, font)
+                    elif high_scores_button_rect.collidepoint(event.pos):
+                        high_score_menu(screen, squares, resolution, font)
 
         pygame.display.flip()
+
+def high_score_menu(screen, squares, resolution, font):
+    with open("high_scores.json", "r") as in_file:
+        high_scores = json.load(in_file)
+    while True:
+        screen.fill((0, 0, 0))
+        for i in range(len(high_scores)):
+            high_score = font.render(f"{i+1}: {high_scores[i]}", False, (0, 255, 0))
+            highRect = high_score.get_rect()
+            highRect.center = (resolution[0]/ 2, 30+i*(resolution[1]/6))
+            screen.blit(high_score, highRect)
+        menu_button = (resolution[0]/2-75, resolution[1] -100, 150, 50)
+        menu_button_rect = pygame.Rect(menu_button)
+        pygame.draw.rect(screen, (255, 100, 0), menu_button)
+        menu_text = font.render("Main Menu", False, (0, 255, 0))
+        menuRect = menu_text.get_rect()
+        menuRect.center = (resolution[0]/2, resolution[1] - 75)
+        screen.blit(menu_text, menuRect)
+        
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if menu_button_rect.collidepoint(event.pos):
+                        main_menu(screen, squares, resolution, font)
+
+        pygame.display.flip()
+        time.sleep(0.01)
+        
