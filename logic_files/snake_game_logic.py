@@ -88,11 +88,12 @@ def main_loop(screen, resolution, squares, font):
             game_over(screen, squares, resolution, font, score)
 
         pygame.display.flip()
-        
+
+
 def game_over(screen, squares, resolution, font, score):
     with open("high_scores.json", "r") as in_file:
         high_scores = json.load(in_file)
-    
+
     high_scores.sort(reverse=True)
     if score > high_scores[-1]:
         high_scores.append(score)
@@ -118,12 +119,12 @@ def game_over(screen, squares, resolution, font, score):
         screen.blit(high_score, highRect)
         pygame.display.flip()
         time.sleep(0.01)
-        
+
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 sys.exit()
-        
+
         if i == 499:
             main_menu(screen, squares, resolution, font)
 
@@ -171,6 +172,7 @@ def main_menu(screen, squares, resolution, font):
 
         pygame.display.flip()
 
+
 def high_score_menu(screen, squares, resolution, font):
     with open("high_scores.json", "r") as in_file:
         high_scores = json.load(in_file)
@@ -179,16 +181,16 @@ def high_score_menu(screen, squares, resolution, font):
         for i in range(len(high_scores)):
             high_score = font.render(f"{i+1}: {high_scores[i]}", False, (0, 255, 0))
             highRect = high_score.get_rect()
-            highRect.center = (resolution[0]/ 2, 30+i*(resolution[1]/6))
+            highRect.center = (resolution[0] / 2, 30 + i * (resolution[1]/6))
             screen.blit(high_score, highRect)
-        menu_button = (resolution[0]/2-75, resolution[1] -100, 150, 50)
+        menu_button = (resolution[0]/2-75, resolution[1] - 100, 150, 50)
         menu_button_rect = pygame.Rect(menu_button)
         pygame.draw.rect(screen, (255, 100, 0), menu_button)
         menu_text = font.render("Main Menu", False, (0, 255, 0))
         menuRect = menu_text.get_rect()
         menuRect.center = (resolution[0]/2, resolution[1] - 75)
         screen.blit(menu_text, menuRect)
-        
+
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -201,4 +203,3 @@ def high_score_menu(screen, squares, resolution, font):
 
         pygame.display.flip()
         time.sleep(0.01)
-        
